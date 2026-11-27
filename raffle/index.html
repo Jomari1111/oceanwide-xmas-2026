@@ -201,7 +201,11 @@ body.on-draw .wrap{max-width:1500px}body.on-draw header{padding-top:12px}body.on
 .winners li.new{animation:flash 1.8s var(--out) both}
 @keyframes flash{0%{opacity:0;transform:translateX(24px);background:rgba(240,213,140,.25)}40%{opacity:1;transform:none;background:rgba(240,213,140,.18)}100%{background:transparent}}
 .batchlab{display:flex;align-items:center;gap:8px;margin:0;font:600 12px/1.2 Cinzel,serif;letter-spacing:.1em;color:var(--gold);white-space:nowrap}
-.batchlab select{padding:10px 12px}
+.batchlab label{margin:0;font:inherit;color:inherit}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper .mini{min-width:40px;min-height:44px;padding:0;font:600 20px/1 Inter,sans-serif}
+.stepper input{width:84px;margin:0;padding:10px 6px;text-align:center;font:700 18px/1 Inter,sans-serif;-moz-appearance:textfield}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .bprog{margin:12px auto 0;max-width:860px}
 .bhead{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;font:600 13px/1 Cinzel,serif;letter-spacing:.18em;color:var(--gold)}
 .bchips{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;counter-reset:c}
@@ -267,7 +271,7 @@ body.on-draw .wrap{max-width:1500px}body.on-draw header{padding-top:12px}body.on
         <div class="controls">
           <button class="btn drawbtn" id="drawBtn">Spin the wheel</button>
           <select id="prizeSel" aria-label="Prize to draw"></select>
-          <label class="batchlab host">Winners per spin<select id="batchSel"><option value="1">1 at a time</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>8</option><option>10</option><option>15</option><option>20</option><option>25</option><option>30</option><option>50</option></select></label>
+          <div class="batchlab host"><label for="batchIn">Winners per spin</label><div class="stepper"><button type="button" class="ghost mini" id="bMinus" aria-label="One less">−</button><input id="batchIn" type="number" inputmode="numeric" min="1" max="500" step="1" value="1"><button type="button" class="ghost mini" id="bPlus" aria-label="One more">+</button></div></div>
           <button class="ghost" id="fsBtn">Full screen</button>
           <button class="ghost" id="sndBtn" aria-pressed="true">Sound on</button>
         </div>
@@ -314,7 +318,7 @@ body.on-draw .wrap{max-width:1500px}body.on-draw header{padding-top:12px}body.on
           <label>Spin length<select id="spin"><option value="13000">Dramatic, about 13 seconds</option><option value="7000">Normal, about 7 seconds</option><option value="2200">Quick, about 2 seconds</option></select></label>
           <div class="controls" style="justify-content:flex-start;margin-top:0"><button class="ghost" id="clearWin">Clear all winners</button></div>
           <p class="hint">Winners leave the wheel once confirmed. "Not here, spin again" takes that person off the wheel and spins for the same prize; bring them back in the Participants tab.</p>
-          <p class="hint">Winners per spin: pick 2 or more and the wheel spins that many times in a row for the current prize. Each winner is saved as they land. At the end you can tap "Not here" on anyone and draw replacements.</p>
+          <p class="hint">Winners per spin: type any number, or use − and +. With 2 or more, the wheel spins that many times in a row for the current prize. Each winner is saved as they land. At the end you can tap "Not here" on anyone and draw replacements.</p>
         </div>
       </aside>
     </div>
@@ -614,7 +618,7 @@ function path(ms,fn){return anim((e,dt)=>{const k=Math.min(1,e/ms),th=fn(k);adva
 /* ---------- physics: friction slows the wheel, the pointer brakes it at every peg ---------- */
 const MODES={13000:{a:.34,b:.05,turns:9,wind:550,rest:300,hold:700},7000:{a:.75,b:.1,turns:6,wind:550,rest:300,hold:700},2200:{a:20,b:1,turns:1.6,wind:220,rest:120,hold:300,trim:120}};
 const sleep=ms=>new Promise(r=>setTimeout(r,reduce?0:ms));
-const batchN=()=>Math.max(1,parseInt($('#batchSel').value,10)||1);
+const batchN=()=>Math.min(500,Math.max(1,parseInt($('#batchIn').value,10)||1));
 const waitWheel=()=>new Promise(r=>{const f=()=>animRun?requestAnimationFrame(f):r();f()});
 let B=null;
 function pointerStep(st,th,dt){const K=950,C=10,prev=st.phi;st.v+=(-K*st.phi-C*st.v)*dt;st.phi+=st.v*dt;let lo=-1.2,hi=1.2;
@@ -719,7 +723,12 @@ $('#bDone').addEventListener('click',closeBatch);
 $('#bRedraw').addEventListener('click',()=>{if(!B)return;const prize=B.prize,k=B.got.filter(x=>x.out).length;closeBatch();
   setTimeout(async()=>{await waitWheel();const n=Math.min(k,pool().length);if(n>0&&!spinning&&!B)runBatch(prize,n)},300)});
 $('#bStop').addEventListener('click',()=>{if(B){B.stop=true;renderProg();toast('Stopping after this spin')}});
-$('#batchSel').addEventListener('change',renderDraw);
+const bIn=$('#batchIn');
+bIn.addEventListener('input',renderDraw);
+bIn.addEventListener('change',()=>{bIn.value=batchN();renderDraw()});
+bIn.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();bIn.value=batchN();bIn.blur();renderDraw()}});
+$('#bMinus').addEventListener('click',()=>{bIn.value=Math.max(1,batchN()-1);renderDraw()});
+$('#bPlus').addEventListener('click',()=>{bIn.value=Math.min(500,batchN()+1);renderDraw()});
 function closeReveal(){const st=$('#stage');st.scrollTop=0;st.scrollLeft=0;$('#reveal').classList.remove('on');$('#live').classList.remove('land','slow');S.pending=null;renderDraw()}
 $('#confirmBtn').addEventListener('click',async()=>{const pd=S.pending;if(!pd)return;closeReveal();lastWin=pd.person.id;
   try{await put('winners',rid('w'),{personId:pd.person.id,name:pd.person.name,dept:pd.person.dept||'',prizeId:pd.prize.id,prize:pd.prize.name,at:Date.now()})}catch(x){toast(`Couldn't save. Note it: ${pd.person.name}, ${pd.prize.name}`)}
