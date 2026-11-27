@@ -200,6 +200,21 @@ body.on-draw .wrap{max-width:1500px}body.on-draw header{padding-top:12px}body.on
 .winscroll{max-height:520px;overflow:auto;padding-right:6px}
 .winners li.new{animation:flash 1.8s var(--out) both}
 @keyframes flash{0%{opacity:0;transform:translateX(24px);background:rgba(240,213,140,.25)}40%{opacity:1;transform:none;background:rgba(240,213,140,.18)}100%{background:transparent}}
+.batchlab{display:flex;align-items:center;gap:8px;margin:0;font:600 12px/1.2 Cinzel,serif;letter-spacing:.1em;color:var(--gold);white-space:nowrap}
+.batchlab select{padding:10px 12px}
+.bprog{margin:12px auto 0;max-width:860px}
+.bhead{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;font:600 13px/1 Cinzel,serif;letter-spacing:.18em;color:var(--gold)}
+.bchips{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;counter-reset:c}
+.bchips li{counter-increment:c;display:flex;align-items:center;gap:8px;padding:6px 14px 6px 6px;border-radius:999px;border:1px solid var(--line);background:rgba(217,180,96,.1);font:600 15px/1.2 Inter,sans-serif;color:var(--champ);animation:rise .6s var(--out) both}
+.bchips li::before{content:counter(c);display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--gold);color:var(--navy);font:700 12px Cinzel,serif}
+.binner{width:min(100%,960px);position:relative}
+.bsub{margin:10px 0 0;font:600 clamp(16px,2.2vw,20px)/1.3 Inter,sans-serif;color:var(--champ)}.bsub b{color:var(--gold-l)}
+.bgrid{list-style:none;margin:18px 0 0;padding:4px;display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-height:50vh;overflow:auto;counter-reset:b;text-align:left}
+.bgrid li{flex:0 1 290px;counter-increment:b;display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:rgba(217,180,96,.08);animation:rise .6s var(--out) both}
+.bgrid li::before{content:counter(b);display:grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1px solid var(--gold);font:600 13px Cinzel,serif;color:var(--gold-l)}
+.bgrid b{display:block;font:700 clamp(15px,1.5vw,18px)/1.2 Cinzel,serif;color:var(--ivory);overflow-wrap:anywhere}.bgrid small{display:block;color:var(--muted);font-style:italic;font-size:14px}
+.bgrid li.out{opacity:.45}.bgrid li.out b{text-decoration:line-through}
+.bgrid .mini{min-height:30px;padding:5px 10px;font-size:11px}.bgrid .gone{font:600 12px Inter,sans-serif;color:#ffb4a8}
 .setbox{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
 @media(max-width:920px){.arena{grid-template-columns:minmax(0,1fr)}.side-win{position:static}}
 </style>
@@ -252,10 +267,27 @@ body.on-draw .wrap{max-width:1500px}body.on-draw header{padding-top:12px}body.on
         <div class="controls">
           <button class="btn drawbtn" id="drawBtn">Spin the wheel</button>
           <select id="prizeSel" aria-label="Prize to draw"></select>
+          <label class="batchlab host">Winners per spin<select id="batchSel"><option value="1">1 at a time</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>8</option><option>10</option><option>15</option><option>20</option><option>25</option><option>30</option><option>50</option></select></label>
           <button class="ghost" id="fsBtn">Full screen</button>
           <button class="ghost" id="sndBtn" aria-pressed="true">Sound on</button>
         </div>
+        <div class="bprog" id="bprog" hidden>
+          <div class="bhead"><span id="bcount"></span><button class="ghost mini" id="bStop">Stop after this spin</button></div>
+          <ol class="bchips" id="bchips"></ol>
+        </div>
         <p class="pool" id="poolInfo"></p>
+        <div class="reveal" id="breveal" aria-live="polite">
+          <div class="ray"></div>
+          <div class="inner binner">
+            <div class="congrats">Congratulations</div>
+            <p class="bsub" id="bPrize"></p>
+            <ol class="bgrid" id="bList"></ol>
+            <div class="revbtns">
+              <button class="btn" id="bDone">Done</button>
+              <button class="ghost" id="bRedraw" hidden>Draw replacements</button>
+            </div>
+          </div>
+        </div>
         <div class="reveal" id="reveal" aria-live="polite">
           <div class="ray"></div>
           <div class="inner">
@@ -279,9 +311,10 @@ body.on-draw .wrap{max-width:1500px}body.on-draw header{padding-top:12px}body.on
         <div class="controls" style="justify-content:flex-start;margin-top:14px"><button class="ghost" id="copyWin">Copy winners list</button></div>
         <div class="host setbox">
           <h3>Draw settings</h3>
-          <label>Spin length<select id="spin"><option value="13000">Dramatic, about 13 seconds</option><option value="7000">Normal, about 7 seconds</option><option value="4000">Quick, for minor prizes</option></select></label>
+          <label>Spin length<select id="spin"><option value="13000">Dramatic, about 13 seconds</option><option value="7000">Normal, about 7 seconds</option><option value="2200">Quick, about 2 seconds</option></select></label>
           <div class="controls" style="justify-content:flex-start;margin-top:0"><button class="ghost" id="clearWin">Clear all winners</button></div>
           <p class="hint">Winners leave the wheel once confirmed. "Not here, spin again" takes that person off the wheel and spins for the same prize; bring them back in the Participants tab.</p>
+          <p class="hint">Winners per spin: pick 2 or more and the wheel spins that many times in a row for the current prize. Each winner is saved as they land. At the end you can tap "Not here" on anyone and draw replacements.</p>
         </div>
       </aside>
     </div>
@@ -331,7 +364,7 @@ body.on-draw .wrap{max-width:1500px}body.on-draw header{padding-top:12px}body.on
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const S={people:[],prizes:[],winners:[],mode:'loading',admin:false,canWrite:true,loaded:false,pending:null,skip:new Set()};
+const S={people:[],prizes:[],winners:[],mode:'loading',admin:false,canWrite:true,loaded:false,pending:null,skip:new Set(),hold:new Set()};
 let db=null,spinning=false;
 const LS='owg-raffle-v1',GENERAL={id:'general',name:'Raffle Prize',qty:Infinity};
 
@@ -360,7 +393,7 @@ const won=pid=>S.winners.filter(w=>w.prizeId===pid).length;
 const left=p=>p.qty===Infinity?Infinity:Math.max(0,(Number(p.qty)||0)-won(p.id));
 function currentPrize(){const list=prizesOrdered();if(!list.length)return GENERAL;
   const sel=list.find(p=>p.id===$('#prizeSel').value);if(sel&&left(sel)>0)return sel;return list.find(p=>left(p)>0)||null}
-function pool(){const ws=new Set(S.winners.map(w=>w.personId));return S.people.filter(p=>!p.absent&&!S.skip.has(p.id)&&!ws.has(p.id))}
+function pool(){const ws=new Set(S.winners.map(w=>w.personId));return S.people.filter(p=>!p.absent&&!S.skip.has(p.id)&&!S.hold.has(p.id)&&!ws.has(p.id))}
 
 /* mode note */
 function setMode(){const m=$('#mode');
@@ -379,7 +412,8 @@ function renderDraw(){
   $('#prizeLeft').textContent=cp&&cp.qty!==Infinity?`${left(cp)} of ${cp.qty} left`:'';
   const pl=pool().length;
   $('#poolInfo').textContent=!S.people.length?'Add participants in the Participants tab to start.':`${pl} ${pl===1?'name':'names'} on the wheel`+(S.admin?'':' · only the organizer can run the draw');
-  $('#drawBtn').disabled=$('#hub').disabled=!S.admin||!pl||!cp||spinning;
+  $('#drawBtn').disabled=$('#hub').disabled=!S.admin||!pl||!cp||spinning||!!B;
+  const bn=cp?Math.min(batchN(),left(cp),pl):1;$('#drawBtn').textContent=B?'Drawing…':bn>1?`Spin for ${bn} winners`:'Spin the wheel';
   /* winners grouped by prize, in draw order */
   const ws=[...S.winners].sort((a,b)=>(a.at||0)-(b.at||0)),groups=[];
   ws.forEach(w=>{let g=groups.find(x=>x.k===w.prizeId);if(!g)groups.push(g={k:w.prizeId,name:w.prize,items:[]});g.items.push(w)});
@@ -578,7 +612,11 @@ let lastSeg=null;function liveName(){const sg=G.L?tipSeg(theta,P.phi):underPoint
 function path(ms,fn){return anim((e,dt)=>{const k=Math.min(1,e/ms),th=fn(k);advance(theta,th,dt);theta=th;return k<1})}
 
 /* ---------- physics: friction slows the wheel, the pointer brakes it at every peg ---------- */
-const MODES={13000:{a:.34,b:.05,turns:9},7000:{a:.75,b:.1,turns:6},4000:{a:1.9,b:.2,turns:3.5}};
+const MODES={13000:{a:.34,b:.05,turns:9,wind:550,rest:300,hold:700},7000:{a:.75,b:.1,turns:6,wind:550,rest:300,hold:700},2200:{a:20,b:1,turns:1.6,wind:220,rest:120,hold:300,trim:120}};
+const sleep=ms=>new Promise(r=>setTimeout(r,reduce?0:ms));
+const batchN=()=>Math.max(1,parseInt($('#batchSel').value,10)||1);
+const waitWheel=()=>new Promise(r=>{const f=()=>animRun?requestAnimationFrame(f):r();f()});
+let B=null;
 function pointerStep(st,th,dt){const K=950,C=10,prev=st.phi;st.v+=(-K*st.phi-C*st.v)*dt;st.phi+=st.v*dt;let lo=-1.2,hi=1.2;
   for(const i of nearPegs(th)){let d=segs[i].start+th;d=((d+Math.PI)%TAU+TAU)%TAU-Math.PI;if(Math.abs(d)>.6){st.side.delete(i);continue}
     const ct=contact(d);if(!ct||ct.t>G.L){st.side.delete(i);continue}
@@ -610,34 +648,78 @@ function plan(th0,win,m){let k=Math.ceil((th0+m.turns*TAU+win.start)/TAU);const 
   return best??(wl+wh)/2}
 
 /* the draw */
-async function draw(){
-  const prize=currentPrize();if(spinning||!S.admin||!prize)return;if(animRun){pendingSpin=true;return}
-  const inWheel=segs.filter(s=>pool().some(p=>p.id===s.x.id));if(!inWheel.length)return;
-  spinning=true;renderDraw();actx();$('#stage').scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});
+/* one spin: lands on a random name still on the wheel and returns that person */
+async function spinOnce(){
+  const inWheel=segs.filter(s=>pool().some(p=>p.id===s.x.id));if(!inWheel.length)return null;
+  const m=MODES[Number($('#spin').value)]||MODES[13000];
   const win=inWheel[rand(inWheel.length)],live=$('#live'),stage=$('#stage');
   live.classList.remove('slow','land');stage.classList.add('spinning');lastSeg=null;
   theta=((theta%TAU)+TAU)%TAU;const base=theta;
   if(reduce||segs.length<2){theta=-(win.start+(win.end-win.start)/2);paint();liveName()}
   else{
-    const m=MODES[Number($('#spin').value)]||MODES[13000];
     /* wind-up: a hand pulls the wheel back, then flicks it */
-    await path(550,k=>base-.18*Math.sin(k*Math.PI/2));
-    const th0=theta,w0=plan(th0,win,m),run=simulate(th0,w0,m,true),N=run.T.length;let ki=0;
+    await path(m.wind,k=>base-.18*Math.sin(k*Math.PI/2));
+    const th0=theta,w0=plan(th0,win,m),run=simulate(th0,w0,m,true);let N=run.T.length,ki=0;
+    if(m.trim){const L=N-1;let j=L;while(j>0&&Math.abs(run.T[j]-run.T[L])<1e-5&&Math.abs(run.F[j]-run.F[L])<2e-3)j--;N=Math.min(N,j+m.trim)}
     await anim(e=>{const i=Math.min(N-1,Math.floor(e));theta=run.T[i];P.phi=run.F[i];
       while(ki<run.K.length&&run.K[ki][0]<=i){const now=performance.now();if(now-P.lastClack>26){P.lastClack=now;clack(run.K[ki][1])}ki++}
       const w=i>20?(run.T[i]-run.T[i-20])/.02:9;if(Math.abs(w)<1.6)live.classList.add('slow');return i<N-1});
-    P.v=0;P.held=false;P.side.clear();await settle(300);
+    P.v=0;P.held=false;P.side.clear();await settle(m.rest);
   }
   theta=((theta%TAU)+TAU)%TAU;paint();
   const landed=tipSeg(theta,P.phi)||win;lastSeg=null;
   live.textContent=landed.x.name;live.classList.add('land');stage.classList.remove('spinning');
-  await new Promise(r=>setTimeout(r,reduce?0:700));
-  const person=S.people.find(p=>p.id===landed.x.id)||{id:landed.x.id,name:landed.x.name,dept:landed.x.dept};
-  const list=prizesOrdered(),grand=list.length>1&&prize.id===list[list.length-1].id;
+  await sleep(m.hold);
+  return S.people.find(p=>p.id===landed.x.id)||{id:landed.x.id,name:landed.x.name,dept:landed.x.dept}}
+const isGrand=prize=>{const list=prizesOrdered();return list.length>1&&prize.id===list[list.length-1].id};
+async function draw(){
+  const prize=currentPrize();if(spinning||B||S.pending||!S.admin||!prize)return;if(animRun){pendingSpin=true;return}
+  if(!segs.some(s=>pool().some(p=>p.id===s.x.id)))return;
+  const n=Math.min(batchN(),left(prize),pool().length);
+  if(n>1)return runBatch(prize,n);
+  spinning=true;renderDraw();actx();$('#stage').scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});
+  const person=await spinOnce();if(!person){spinning=false;renderDraw();return}
+  const grand=isGrand(prize);
   S.pending={person,prize};
   $('#rName').textContent=person.name;$('#rDept').textContent=person.dept||'';$('#rPrize').innerHTML=`wins <b>${esc(prize.name)}</b>`;
   $('#reveal').classList.add('on');burst(grand?320:190);if(grand)setTimeout(()=>burst(220),700);fanfare(grand);
   spinning=false;$('#confirmBtn').focus({preventScroll:true})}
+
+/* batch: spin n times in a row for one prize, saving each winner as they land */
+function renderProg(){if(!B)return;$('#bcount').textContent=B.done?`${B.got.length} of ${B.n} drawn`:`Spin ${Math.min(B.got.length+1,B.n)} of ${B.n}`;
+  $('#bchips').innerHTML=B.got.map(g=>`<li>${esc(g.person.name)}</li>`).join('');$('#bStop').hidden=!!B.done||B.stop;}
+async function runBatch(prize,n){
+  spinning=true;B={prize,n,got:[],stop:false,done:false};actx();renderDraw();
+  $('#stage').scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});
+  $('#bprog').hidden=false;renderProg();
+  for(let i=0;i<n&&!B.stop;i++){
+    await waitWheel();if(!segs.some(s=>pool().some(p=>p.id===s.x.id)))break;
+    renderProg();
+    const person=await spinOnce();if(!person)break;
+    const wid=rid('w');B.got.push({wid,person,out:false});S.hold.add(person.id);
+    beep(1047,.25,'triangle',.06);beep(1568,.35,'triangle',.06,.09);burst(60);renderProg();
+    try{await put('winners',wid,{personId:person.id,name:person.name,dept:person.dept||'',prizeId:prize.id,prize:prize.name,at:Date.now()})}catch(x){toast(`Couldn't save. Note it: ${person.name}, ${prize.name}`)}
+    spinning=false;syncWheel();spinning=true;
+    if(i<n-1&&!B.stop)await sleep(450)}
+  await waitWheel();B.done=true;renderProg();spinning=false;openBatch()}
+function renderBList(){const g=B.got;
+  $('#bList').innerHTML=g.map((x,i)=>`<li class="${x.out?'out':''}" style="animation-delay:${Math.min(i,30)*45}ms"><div><b>${esc(x.person.name)}</b>${x.person.dept?`<small>${esc(x.person.dept)}</small>`:''}</div>${x.out?'<span class="gone">Removed</span>':`<button class="ghost mini" data-bnot="${i}">Not here</button>`}</li>`).join('');
+  const k=g.filter(x=>x.out).length,r=$('#bRedraw');r.hidden=!k||!pool().length;r.textContent=`Draw ${k} replacement${k>1?'s':''}`}
+function openBatch(){if(!B)return;const grand=isGrand(B.prize),c=B.got.length;
+  if(!c){closeBatch();return}
+  $('#bPrize').innerHTML=`${c} ${c===1?'winner':'winners'} of <b>${esc(B.prize.name)}</b>`;renderBList();
+  $('#breveal').classList.add('on');burst(grand?320:220);if(grand)setTimeout(()=>burst(220),700);fanfare(grand);$('#bDone').focus({preventScroll:true})}
+function closeBatch(){const st=$('#stage');st.scrollTop=0;st.scrollLeft=0;$('#breveal').classList.remove('on');$('#bprog').hidden=true;$('#live').classList.remove('land','slow');
+  B=null;S.hold.clear();renderDraw();syncWheel()}
+$('#bList').addEventListener('click',async e=>{const t=e.target.closest('button[data-bnot]');if(!t||!B)return;if(!arm(t,'Tap again'))return;
+  const x=B.got[+t.dataset.bnot];if(!x||x.out)return;x.out=true;S.hold.delete(x.person.id);S.skip.add(x.person.id);renderBList();
+  try{await del('winners',x.wid);await put('people',x.person.id,{...strip0(S.people.find(p=>p.id===x.person.id)||x.person),absent:true})}catch(err){toast('Couldn\'t save that change')}
+  renderBList()});
+$('#bDone').addEventListener('click',closeBatch);
+$('#bRedraw').addEventListener('click',()=>{if(!B)return;const prize=B.prize,k=B.got.filter(x=>x.out).length;closeBatch();
+  setTimeout(async()=>{await waitWheel();const n=Math.min(k,pool().length);if(n>0&&!spinning&&!B)runBatch(prize,n)},300)});
+$('#bStop').addEventListener('click',()=>{if(B){B.stop=true;renderProg();toast('Stopping after this spin')}});
+$('#batchSel').addEventListener('change',renderDraw);
 function closeReveal(){const st=$('#stage');st.scrollTop=0;st.scrollLeft=0;$('#reveal').classList.remove('on');$('#live').classList.remove('land','slow');S.pending=null;renderDraw()}
 $('#confirmBtn').addEventListener('click',async()=>{const pd=S.pending;if(!pd)return;closeReveal();lastWin=pd.person.id;
   try{await put('winners',rid('w'),{personId:pd.person.id,name:pd.person.name,dept:pd.person.dept||'',prizeId:pd.prize.id,prize:pd.prize.name,at:Date.now()})}catch(x){toast(`Couldn't save. Note it: ${pd.person.name}, ${pd.prize.name}`)}
@@ -650,7 +732,7 @@ $('#fsBtn').addEventListener('click',async()=>{try{document.fullscreenElement?aw
 document.addEventListener('fullscreenchange',()=>setTimeout(sizeWheel,80));
 new ResizeObserver(()=>sizeWheel()).observe($('#wheelbox'));
 document.addEventListener('keydown',e=>{if(e.target.matches('input,textarea,select,button'))return;const v=location.hash.slice(1)||'draw';
-  if(e.code==='Space'&&v==='draw'){e.preventDefault();if(S.pending)$('#confirmBtn').click();else draw()}});
+  if(e.code==='Space'&&v==='draw'){e.preventDefault();if(S.pending)$('#confirmBtn').click();else if(B&&B.done)closeBatch();else if(!B)draw()}});
 let lastWin=null;
 
 /* start */
