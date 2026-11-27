@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Judges' Scoresheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* VOICE: formal and festive, a judge's card at a masquerade ball.
+   IDEA: the printed scoresheet a judge holds, with tick boxes instead of sums.
+   PICTURE: the live scoresheet itself, each row a strip of five gold boxes.
+   COLOUR and TYPE: deep navy ground, gold ticks, cream text; Cormorant titles, Figtree for controls.
+   LAYOUT: one calm column of group cards; results as a ranked board with a reveal mode. */
+:root{color-scheme:dark;--bg:#0E1838;--bg2:#15214A;--card:#18264F;--line:rgba(217,180,96,.28);--gold:#D9B460;--gold2:#F0D58C;--ink:#F4ECDC;--mute:#B9C1DA;--bad:#E8907A}
+:root[data-theme=light],:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:radial-gradient(ellipse 90% 60% at 50% 0%,#1E3274 0%,var(--bg) 60%) fixed,var(--bg);color:var(--ink);font:16px/1.5 Figtree,system-ui,sans-serif;overflow-x:clip}
+.wrap{max-width:860px;margin:0 auto;padding:20px max(4vw,14px) 120px}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+header svg{flex:none}
+h1{font:700 clamp(28px,5vw,40px)/1.05 'Cormorant Garamond',serif;margin:0;color:var(--gold2);text-wrap:balance}
+.sub{color:var(--mute);font-size:15px;margin:2px 0 0}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 10px;border-bottom:1px solid var(--line)}
+nav a{color:var(--mute);text-decoration:none;padding:12px 14px;min-height:44px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-1px}
+nav a[aria-current=page]{color:var(--gold2);border-color:var(--gold)}
+nav a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
+.mode{font-size:13px;color:var(--mute);margin:0 0 14px}
+.mode b{color:var(--gold2);font-weight:600}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px}
+.chip{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:10px 16px;min-height:44px;font:600 15px Figtree,sans-serif;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--gold);color:#14204A;border-color:var(--gold)}
+.lbl{font-size:13px;color:var(--mute);font-weight:600}
+.card{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.ch{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.ch h2{font:700 24px/1.1 'Cormorant Garamond',serif;margin:0;flex:1}
+.ord{color:var(--gold);font-weight:700;font-size:14px}
+.total{font:700 30px/1 'Cormorant Garamond',serif;color:var(--gold2);white-space:nowrap}
+.total small{font:500 13px Figtree,sans-serif;color:var(--mute)}
+.pill{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--mute);white-space:nowrap}
+.pill.ok{background:rgba(217,180,96,.18);color:var(--gold2);border-color:var(--gold)}
+.crit{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.cn{font-weight:600}.cn span{color:var(--gold);font-weight:700;margin-left:6px;white-space:nowrap}
+.cd{font-size:13px;color:var(--mute)}
+.ticks{display:flex;gap:6px}
+.ticks label{position:relative;display:grid;place-items:center;width:46px;height:46px;border:1.5px solid var(--gold);border-radius:8px;cursor:pointer;font-weight:700;color:var(--gold2);transition:background .15s}
+.ticks input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.ticks label:has(input:checked){background:var(--gold);color:#14204A}
+.ticks label:has(input:focus-visible){outline:2px solid var(--gold2);outline-offset:2px}
+.ticks label:has(input:disabled){opacity:.45;cursor:not-allowed}
+.scale{display:flex;justify-content:space-between;font-size:11px;color:var(--mute);margin-top:3px;gap:8px}
+.note{width:100%;margin-top:10px;background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:8px;color:var(--ink);font:16px Figtree,sans-serif;padding:10px;min-height:44px;resize:vertical}
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(10,18,44,.94);border-top:1px solid var(--line);padding:12px max(4vw,14px) calc(12px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:12px;justify-content:center;font-weight:600;backdrop-filter:blur(6px)}
+.meter{flex:0 1 220px;height:8px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--gold);transition:width .3s}
+.btn{background:var(--gold);color:#14204A;border:0;border-radius:10px;padding:11px 18px;min-height:44px;font:700 15px Figtree,sans-serif;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--gold2);border:1px solid var(--gold)}
+.btn.warn{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-size:13px;color:var(--mute);font-weight:600}
+th:nth-child(2),td:nth-child(2){text-align:left;white-space:normal}
+td.fin{font:700 22px 'Cormorant Garamond',serif;color:var(--gold2)}
+.rk{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);font-weight:700}
+tr.top1 .rk{background:var(--gold);color:#14204A;border-color:var(--gold)}
+tr.top2 .rk,tr.top3 .rk{border-color:var(--gold);color:var(--gold2)}
+.fbar{height:6px;border-radius:6px;background:rgba(255,255,255,.1);margin-top:5px}.fbar i{display:block;height:100%;border-radius:6px;background:var(--gold)}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.row input{flex:1}
+.in{background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:8px;color:var(--ink);font:16px Figtree,sans-serif;padding:10px;min-height:44px;width:100%}
+.in.w{flex:0 0 76px;text-align:right}
+.ib{flex:none;width:44px;height:44px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--mute);font-size:18px;cursor:pointer}
+.sec{font:700 22px 'Cormorant Garamond',serif;color:var(--gold2);margin:22px 0 8px}
+.warnline{color:var(--bad);font-size:14px;font-weight:600}
+.okline{color:var(--gold2);font-size:14px;font-weight:600}
+.help{font-size:14px;color:var(--mute)}
+.dlg{position:fixed;inset:0;background:rgba(4,8,22,.7);display:grid;place-items:center;padding:20px;z-index:20}
+.dlg>div{background:var(--bg2);border:1px solid var(--gold);border-radius:14px;padding:20px;max-width:420px}
+.reveal{position:fixed;inset:0;z-index:30;background:radial-gradient(ellipse 70% 60% at 50% 40%,#22388A,#0B1536 75%);display:grid;place-items:center;text-align:center;padding:24px}
+.reveal .place{font:600 clamp(20px,4vw,30px) 'Cormorant Garamond',serif;color:var(--gold)}
+.reveal .who{font:700 clamp(44px,10vw,96px)/1.05 'Cormorant Garamond',serif;color:var(--gold2);margin:8px 0;text-wrap:balance}
+.reveal .pts{font-size:clamp(18px,3vw,24px);color:var(--ink)}
+.reveal .acts{display:flex;gap:10px;justify-content:center;margin-top:28px;flex-wrap:wrap}
+.pop{animation:pop .6s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes pop{from{opacity:0;transform:scale(.8) translateY(14px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.pop{animation:none}.meter i,.ticks label{transition:none}}
+@media(max-width:600px){.crit{grid-template-columns:minmax(0,1fr)}.ticks label{width:auto;flex:1}.ticks{width:100%}table{font-size:13px}.total{font-size:26px}}
+[hidden]{display:none!important}
+</style>
+<script src="../ow-config.js"></script>
+<script src="../ow-backend.js"></script>
+</head>
+<body>
+<div class="wrap">
+<header>
+<svg width="64" height="30" viewBox="0 0 400 190" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6DE9E"/><stop offset=".5" stop-color="#D9B460"/><stop offset="1" stop-color="#A97F33"/></linearGradient><path id="h" d="M200 62C228 34 292 22 352 42C384 53 398 80 388 108C375 142 322 160 280 150C246 142 224 122 200 128Z"/></defs><use href="#h" fill="none" stroke="url(#g)" stroke-width="10"/><use href="#h" fill="none" stroke="url(#g)" stroke-width="10" transform="translate(400 0) scale(-1 1)"/><path d="M232 96C252 74 300 72 334 90C316 113 268 120 232 96Z" fill="url(#g)"/><path d="M232 96C252 74 300 72 334 90C316 113 268 120 232 96Z" fill="url(#g)" transform="translate(400 0) scale(-1 1)"/></svg>
+<div><h1>Judges' Scoresheet</h1><p class="sub" id="evt">Group performances · A Christmas Masquerade</p></div>
+</header>
+<nav aria-label="Views"><a href="#score">Score</a><a href="#results">Results</a><a href="#setup">Setup</a></nav>
+<p class="mode" id="mode">Loading…</p>
+<main id="view"></main>
+</div>
+<div class="bar" id="bar" hidden></div>
+<div id="overlay"></div>
+<script>
+{
+const DEF={event:'Group performances · A Christmas Masquerade',locked:false,
+ groups:[{id:'g1',name:'Group 1'},{id:'g2',name:'Group 2'},{id:'g3',name:'Group 3'},{id:'g4',name:'Group 4'},{id:'g5',name:'Group 5'}],
+ judges:[{id:'j1',name:'Judge 1'},{id:'j2',name:'Judge 2'},{id:'j3',name:'Judge 3'}],
+ criteria:[{id:'c1',name:'Execution and mastery',desc:'Clean moves or vocals, on time, few mistakes',w:30},
+  {id:'c2',name:'Creativity and concept',desc:'Original idea, fresh take, memorable moments',w:25},
+  {id:'c3',name:'Theme and costume',desc:'Fits the Christmas Masquerade: masks, outfits, props',w:20},
+  {id:'c4',name:'Stage presence and audience impact',desc:'Energy, confidence, crowd reaction',w:15},
+  {id:'c5',name:'Teamwork and coordination',desc:'In sync, everyone involved, smooth transitions',w:10}]};
+const SCALE=['Needs work','Fair','Good','Very good','Outstanding'];
+const LK='ow-judging-v1';
+const S={mode:'loading',admin:false,cfg:null,scores:{},judge:null,loaded:false,reveal:null,confirm:null};
+let db=null;
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cfg=()=>S.cfg||DEF;
+const sid=(j,g)=>j+'__'+g;
+const r2=n=>Math.round(n*100)/100;
+try{S.judge=localStorage.getItem(LK+'-judge')}catch(e){}
+
+/* storage */
+function loadLocal(){try{const d=JSON.parse(localStorage.getItem(LK)||'{}');S.cfg=d.cfg||null;S.scores=d.scores||{}}catch(e){}}
+function saveLocal(){try{localStorage.setItem(LK,JSON.stringify({cfg:S.cfg,scores:S.scores}))}catch(e){}}
+const busy={},queued={};
+async function writeDoc(path,data){if(!db){saveLocal();return}
+ if(busy[path]){queued[path]=data;return}busy[path]=true;
+ try{await Promise.race([db.doc(path).set(data),new Promise((_,j)=>setTimeout(()=>j(new Error('timeout')),9000))])}catch(e){flash(e&&e.message==='timeout'?'Saving is slow. Your ticks are kept on this phone and will retry.':'Could not save. Check that you have access to score.')}
+ busy[path]=false;if(queued[path]){const d=queued[path];delete queued[path];writeDoc(path,d)}}
+let cfgT=null;
+function saveCfg(){if(!S.cfg)S.cfg=JSON.parse(JSON.stringify(DEF));S.cfg._t=Date.now();clearTimeout(cfgT);cfgT=setTimeout(()=>{cfgT=null;writeDoc('config/main',S.cfg)},500);if(!db)saveLocal()}
+function saveScore(j,g){const k=sid(j,g);S.scores[k].t=Math.max(Date.now(),S.scores[k].t||0);writeDoc('scores/'+k,S.scores[k])}
+
+/* maths */
+function judgeTotal(j,g){const s=S.scores[sid(j,g)];const cr=cfg().criteria;if(!s)return{total:0,done:0,n:cr.length};
+ let t=0,d=0;cr.forEach(c=>{const v=s.r&&s.r[c.id];if(v){t+=v/5*c.w;d++}});return{total:r2(t),done:d,n:cr.length}}
+function results(){const C=cfg();return C.groups.map(g=>{const per=C.judges.map(j=>{const x=judgeTotal(j.id,g.id);return x.done===x.n?x.total:null});
+ const ok=per.filter(v=>v!=null);const fin=ok.length?r2(ok.reduce((a,b)=>a+b,0)/ok.length):null;
+ const tb=C.criteria.map(c=>{const vals=C.judges.map(j=>{const s=S.scores[sid(j.id,g.id)];return s&&s.r&&s.r[c.id]}).filter(Boolean);return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0});
+ return{g,per,fin,count:ok.length,tb}}).sort((a,b)=>(b.fin??-1)-(a.fin??-1)||b.tb.reduce((x,v,i)=>x||(v-a.tb[i]),0))}
+const wsum=()=>cfg().criteria.reduce((a,c)=>a+(+c.w||0),0);
+
+/* views */
+function route(){const h=location.hash.slice(1);return['score','results','setup'].includes(h)?h:'score'}
+function render(){const ae=document.activeElement,fid=ae&&ae.id,ss=ae&&ae.selectionStart;
+ const editing=!!ae&&((ae.tagName==='INPUT'&&ae.type!=='radio')||ae.tagName==='TEXTAREA')&&$('#view').contains(ae);
+ const v=route();document.querySelectorAll('nav a').forEach(a=>a.setAttribute('aria-current',a.getAttribute('href')==='#'+v?'page':'false'));
+ $('#evt').textContent=cfg().event;
+ $('#mode').innerHTML=S.mode==='shared'?'<b>Live.</b> Scores sync across every judge’s phone.'+(cfg().locked?' <b>Scoring is locked.</b>':''):S.mode==='slow'?'Still connecting… scores will appear when the connection is back.':S.mode==='local'?'<b>This device only.</b> Pass it between judges. Turn on sync in ow-config.js to score on separate phones.':'Loading…';
+ if(!editing||$('#view').dataset.v!==v){$('#view').innerHTML=v==='score'?vScore():v==='results'?vResults():vSetup();$('#view').dataset.v=v}
+ bar(v);
+ if(fid&&!editing){const el=document.getElementById(fid);if(el){el.focus();try{if(ss!=null)el.setSelectionRange(ss,ss)}catch(e){}}}
+ $('#overlay').innerHTML=S.reveal?vReveal():S.confirm?vConfirm():''}
+function vScore(){const C=cfg();const j=C.judges.find(x=>x.id===S.judge);
+ let h='<p class="lbl" id="jl">Who is scoring?</p><div class="chips" role="group" aria-labelledby="jl">'+C.judges.map(x=>`<button class="chip" data-judge="${esc(x.id)}" aria-pressed="${x.id===S.judge}">${esc(x.name)}</button>`).join('')+'</div>';
+ if(!j)return h+'<p class="help">Tap your name to open your scoresheet. Tick one box per criterion; the totals add up for you.</p>';
+ const lock=C.locked;
+ h+=C.groups.map((g,gi)=>{const s=S.scores[sid(j.id,g.id)]||{r:{}};const t=judgeTotal(j.id,g.id);
+  return `<section class="card" aria-labelledby="h${esc(g.id)}"><div class="ch"><span class="ord">#${gi+1}</span><h2 id="h${esc(g.id)}">${esc(g.name)}</h2><span class="pill ${t.done===t.n?'ok':''}">${t.done===t.n?'Complete':t.done+' of '+t.n}</span><span class="total">${t.total.toFixed(t.total%1?1:0)}<small> / 100</small></span></div>`+
+  C.criteria.map(c=>`<div class="crit"><div><div class="cn">${esc(c.name)}<span>${esc(c.w)}%</span></div><div class="cd">${esc(c.desc)}</div></div><div><div class="ticks" role="radiogroup" aria-label="${esc(c.name)} for ${esc(g.name)}">`+
+   [1,2,3,4,5].map(n=>`<label title="${SCALE[n-1]}"><input type="radio" name="r_${esc(g.id)}_${esc(c.id)}" value="${n}" data-g="${esc(g.id)}" data-c="${esc(c.id)}" ${s.r&&s.r[c.id]==n?'checked':''} ${lock?'disabled':''} aria-label="${n}, ${SCALE[n-1]}">${n}</label>`).join('')+
+   `</div><div class="scale"><span>Needs work</span><span>Outstanding</span></div></div></div>`).join('')+
+  `<textarea class="note" id="n_${esc(g.id)}" data-note="${esc(g.id)}" placeholder="Notes (optional)" aria-label="Notes for ${esc(g.name)}" ${lock?'disabled':''}>${esc(s.note||'')}</textarea></section>`}).join('');
+ return h}
+function bar(v){const b=$('#bar');const C=cfg();if(v!=='score'||!C.judges.find(x=>x.id===S.judge)){b.hidden=true;return}
+ const done=C.groups.filter(g=>{const t=judgeTotal(S.judge,g.id);return t.done===t.n}).length;b.hidden=false;
+ b.innerHTML=`<span>${done} of ${C.groups.length} groups scored</span><span class="meter" aria-hidden="true"><i style="width:${C.groups.length?done/C.groups.length*100:0}%"></i></span>`}
+function vResults(){const C=cfg();const R=results();const anyDone=R.some(x=>x.fin!=null);
+ let h=`<div class="card"><div class="ch"><h2>Ranking</h2><button class="btn" data-act="reveal" ${anyDone?'':'disabled'}>Reveal winners</button><button class="btn ghost" data-act="copy" ${anyDone?'':'disabled'}>Copy results</button></div>
+ <div class="scroll"><table><thead><tr><th>Rank</th><th>Group</th>${C.judges.map(j=>`<th>${esc(j.name)}</th>`).join('')}<th>Final</th></tr></thead><tbody>`+
+ R.map((x,i)=>`<tr class="${x.fin!=null&&i<3?'top'+(i+1):''}"><td><span class="rk">${x.fin!=null?i+1:'–'}</span></td><td>${esc(x.g.name)}<div class="fbar"><i style="width:${x.fin||0}%"></i></div></td>${x.per.map(v=>`<td>${v==null?'–':v.toFixed(1)}</td>`).join('')}<td class="fin">${x.fin==null?'–':x.fin.toFixed(2)}</td></tr>`).join('')+
+ `</tbody></table></div><p class="help">Final = average of the judges who finished that group (out of 100). A dash means a judge has not ticked every criterion yet. Ties go to the higher average in ${esc(C.criteria[0]?C.criteria[0].name:'the first criterion')}, then the next criterion.</p></div>`;
+ h+='<div class="card"><div class="ch"><h2>Judges’ progress</h2></div>'+C.judges.map(j=>{const d=C.groups.filter(g=>{const t=judgeTotal(j.id,g.id);return t.done===t.n}).length;return `<div class="row"><span style="flex:1">${esc(j.name)}</span><span class="meter" aria-hidden="true"><i style="width:${C.groups.length?d/C.groups.length*100:0}%"></i></span><span style="width:70px;text-align:right">${d}/${C.groups.length}</span></div>`}).join('')+'</div>';
+ return h}
+function list(kind,items,ph){const dis=S.admin?'':'disabled';return items.map((x,i)=>`<div class="row"><input class="in" id="${kind}_${esc(x.id)}" data-kind="${kind}" data-id="${esc(x.id)}" value="${esc(x.name)}" aria-label="${ph} ${i+1}" ${dis}>`+
+ (S.admin?`<button class="ib" data-up="${kind}" data-id="${esc(x.id)}" aria-label="Move up" ${i?'':'disabled'}>↑</button><button class="ib" data-del="${kind}" data-id="${esc(x.id)}" aria-label="Remove ${esc(x.name)}">×</button>`:'')+'</div>').join('')+
+ (S.admin?`<button class="btn ghost" data-add="${kind}">Add ${ph.toLowerCase()}</button>`:'')}
+function vSetup(){const C=cfg();const dis=S.admin?'':'disabled';const w=wsum();
+ let h=S.admin?'':'<p class="help">Only the organizer can change the setup. Tap Organizer login at the bottom left if that\u2019s you. You can still score.</p>';
+ h+=`<div class="card"><label class="lbl" for="evtin">Title under the heading</label><input class="in" id="evtin" data-evt value="${esc(C.event)}" ${dis}></div>`;
+ h+=`<p class="sec">Groups, in performance order</p><div class="card">${list('groups',C.groups,'Group')}</div>`;
+ h+=`<p class="sec">Judges</p><div class="card">${list('judges',C.judges,'Judge')}</div>`;
+ h+=`<p class="sec">Criteria and weights</p><div class="card">`+C.criteria.map((c,i)=>`<div style="padding:8px 0;border-top:${i?'1px solid var(--line)':'0'}"><div class="row"><input class="in" id="cn_${esc(c.id)}" data-cn="${esc(c.id)}" value="${esc(c.name)}" aria-label="Criterion ${i+1} name" ${dis}><input class="in w" id="cw_${esc(c.id)}" data-cw="${esc(c.id)}" inputmode="numeric" value="${esc(c.w)}" aria-label="Weight in percent" ${dis}><span>%</span>${S.admin?`<button class="ib" data-del="criteria" data-id="${esc(c.id)}" aria-label="Remove criterion">×</button>`:''}</div><input class="in" id="cd_${esc(c.id)}" data-cd="${esc(c.id)}" value="${esc(c.desc)}" aria-label="Criterion ${i+1} description" ${dis}></div>`).join('')+
+ `${S.admin?'<button class="btn ghost" data-add="criteria">Add criterion</button>':''}<p id="wline" class="${w===100?'okline':'warnline'}">Weights add up to ${w}%${w===100?'.':'. Make them add up to 100%.'}</p></div>`;
+ if(S.admin)h+=`<p class="sec">Scoring</p><div class="card"><div class="row" style="flex-wrap:wrap"><button class="btn ${C.locked?'':'ghost'}" data-act="lock">${C.locked?'Unlock scoring':'Lock scoring'}</button><button class="btn warn" data-act="clear">Clear all scores</button></div><p class="help">Lock scoring once the last group has performed so nobody changes a score during the reveal. Tie-break uses the first criterion, so keep the most important one on top.</p></div>`;
+ return h}
+function vReveal(){const R=results().filter(x=>x.fin!=null).slice(0,3);const st=S.reveal.step;
+ if(st===0)return `<div class="reveal" role="dialog" aria-label="Winners reveal"><div><p class="place">Best Group Performance</p><p class="who pop">And the winners are…</p><div class="acts"><button class="btn" data-act="next">${R.length>2?'Show 3rd place':'Show the winner'}</button><button class="btn ghost" data-act="close">Close</button></div></div></div>`;
+ const order=R.slice().reverse();const x=order[st-1];const place=R.indexOf(x);const names=['Champion','2nd place','3rd place'];const last=st>=order.length;
+ return `<div class="reveal" role="dialog" aria-label="Winners reveal"><div><p class="place">${names[place]}</p><p class="who pop">${esc(x.g.name)}</p><p class="pts">${x.fin.toFixed(2)} points</p><div class="acts">${last?'':`<button class="btn" data-act="next">Show ${names[place-1]}</button>`}<button class="btn ghost" data-act="close">Close</button></div></div></div>`}
+function vConfirm(){return `<div class="dlg" role="dialog" aria-label="Confirm"><div><p style="margin-top:0;font-weight:600">Clear every judge’s scores? This cannot be undone.</p><div class="row"><button class="btn warn" data-act="clearyes">Clear scores</button><button class="btn ghost" data-act="clearno">Keep them</button></div></div></div>`}
+let flashT;function flash(t){$('#mode').textContent=t;clearTimeout(flashT);flashT=setTimeout(render,4000)}
+
+/* events */
+const ensure=()=>{if(!S.cfg)S.cfg=JSON.parse(JSON.stringify(DEF));return S.cfg};
+document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
+ if(t.dataset.judge){S.judge=t.dataset.judge;try{localStorage.setItem(LK+'-judge',S.judge)}catch(e){}render();return}
+ const C=()=>ensure();
+ if(t.dataset.add){const k=t.dataset.add,id=k[0]+Date.now().toString(36);C()[k].push(k==='criteria'?{id,name:'New criterion',desc:'',w:0}:{id,name:k==='groups'?'Group '+(C().groups.length+1):'Judge '+(C().judges.length+1)});saveCfg();render();return}
+ if(t.dataset.del){const k=t.dataset.del;C()[k]=C()[k].filter(x=>x.id!==t.dataset.id);saveCfg();render();return}
+ if(t.dataset.up){const a=C()[t.dataset.up],i=a.findIndex(x=>x.id===t.dataset.id);if(i>0){[a[i-1],a[i]]=[a[i],a[i-1]];saveCfg();render()}return}
+ const act=t.dataset.act;
+ if(act==='lock'){C().locked=!C().locked;saveCfg();render()}
+ else if(act==='clear'){S.confirm=true;render()}
+ else if(act==='clearno'){S.confirm=null;render()}
+ else if(act==='clearyes'){S.confirm=null;const keys=Object.keys(S.scores);S.scores={};if(db)keys.forEach(k=>db.doc('scores/'+k).delete().catch(()=>{}));else saveLocal();render()}
+ else if(act==='reveal'){S.reveal={step:0};render()}
+ else if(act==='next'){S.reveal.step++;render()}
+ else if(act==='close'){S.reveal=null;render()}
+ else if(act==='copy'){const R=results();const txt=cfg().event+'\n'+R.map((x,i)=>`${x.fin!=null?i+1:'-'}. ${x.g.name}: ${x.fin==null?'not complete':x.fin.toFixed(2)}`).join('\n');
+  navigator.clipboard.writeText(txt).then(()=>flash('Results copied.'),()=>flash('Copy was blocked by the browser.'))}});
+document.addEventListener('change',e=>{const t=e.target;if(t.type==='radio'&&t.dataset.g){if(cfg().locked)return;const k=sid(S.judge,t.dataset.g);
+ const s=S.scores[k]||(S.scores[k]={judge:S.judge,group:t.dataset.g,r:{},note:''});s.r={...s.r,[t.dataset.c]:+t.value};s.t=Date.now();saveScore(S.judge,t.dataset.g);render()}});
+let noteT={};
+document.addEventListener('input',e=>{const t=e.target;
+ if(t.dataset.note!=null){const g=t.dataset.note,k=sid(S.judge,g);const s=S.scores[k]||(S.scores[k]={judge:S.judge,group:g,r:{},note:''});s.note=t.value.slice(0,500);s.t=Date.now();clearTimeout(noteT[g]);noteT[g]=setTimeout(()=>saveScore(S.judge,g),700);return}
+ const C=ensure();
+ if(t.dataset.evt!=null)C.event=t.value.slice(0,120);
+ else if(t.dataset.kind){const x=C[t.dataset.kind].find(v=>v.id===t.dataset.id);if(x)x.name=t.value.slice(0,80)}
+ else if(t.dataset.cn){const x=C.criteria.find(v=>v.id===t.dataset.cn);if(x)x.name=t.value.slice(0,80)}
+ else if(t.dataset.cd){const x=C.criteria.find(v=>v.id===t.dataset.cd);if(x)x.desc=t.value.slice(0,140)}
+ else if(t.dataset.cw){const x=C.criteria.find(v=>v.id===t.dataset.cw);if(x){x.w=Math.max(0,Math.min(100,parseInt(t.value)||0));if(t.value!==''&&String(x.w)!==t.value)t.value=x.w}}
+ else return;
+ saveCfg();$('#evt').textContent=cfg().event;const wl=$('#wline');if(wl){const w=wsum();wl.className=w===100?'okline':'warnline';wl.textContent='Weights add up to '+w+'%'+(w===100?'.':'. Make them add up to 100%.')}});
+document.addEventListener('focusout',e=>{if($('#view').contains(e.target))setTimeout(()=>{const a=document.activeElement;if(!(a&&$('#view').contains(a)&&(a.tagName==='TEXTAREA'||(a.tagName==='INPUT'&&a.type!=='radio'))))render()},0)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(S.reveal||S.confirm)){S.reveal=null;S.confirm=null;render()}});
+addEventListener('hashchange',()=>{S.reveal=null;S.confirm=null;render()});
+
+/* start */
+function startLocal(){S.mode='local';S.admin=true;loadLocal();render()}
+async function init(){
+ let d=null;try{d=window.owBackend?await owBackend():null}catch(e){d=null}
+ if(!d){startLocal();return}
+ db=d;S.mode='shared';S.admin=owIsAdmin();owAdminButton(()=>{S.admin=true;render()});
+ const slow=setTimeout(()=>{if(!S.loaded){S.mode='slow';render()}},10000);
+ db.collection('config').onSnapshot(s=>{const m=s.docs.find(x=>x.id==='main');if(m){const sv=m.data();if(!cfgT&&(!S.cfg||(sv._t||0)>=(S.cfg._t||0)))S.cfg=sv}if(!s.metadata.fromCache&&!S.loaded){S.loaded=true;clearTimeout(slow);S.mode='shared'}render()},()=>{clearTimeout(slow);render()});
+ db.collection('scores').onSnapshot(s=>{const n={};s.docs.forEach(x=>{const sv=x.data(),mine=S.scores[x.id];n[x.id]=mine&&(mine.t||0)>(sv.t||0)?mine:sv});Object.keys(S.scores).forEach(k=>{const p='scores/'+k;if(!n[k]&&(busy[p]||queued[p]||Date.now()-(S.scores[k].t||0)<15000))n[k]=S.scores[k]});S.scores=n;render()},()=>render());
+ render()}
+render();init();
+}
+</script>
+</body>
+</html>
